@@ -1,0 +1,481 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+		<link href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+		<script src="{{ url_for('static', filename='jquery-3.6.0.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='lodash.min.js') }}" type="text/javascript"></script>
+		<script src="{{ url_for('static', filename='moment-with-locales.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='plotly-latest.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='DataTables/datatables.min.js') }}"></script>
+		<link href="{{ url_for('static', filename='DataTables/datatables.min.css') }}" rel="stylesheet">
+		
+		<style>
+			// hide number input arrows
+			/* Chrome, Safari, Edge, Opera */
+			input::-webkit-outer-spin-button,
+			input::-webkit-inner-spin-button {
+			  -webkit-appearance: none;
+			  margin: 0;
+			}
+
+			/* Firefox */
+			input[type=number] {
+			  -moz-appearance: textfield;
+			}
+		</style>
+
+		<title>{{ controller_name }} | Control Panel</title>
+	</head>
+	<body style="background-color: {{ panel_background_color }};">
+		<div class="container-lg">
+			<div class="row page-header">
+				<div class="col">
+					<h1>{{controller_name}}</h1>
+				</div>
+			</div>
+			
+			<hr>
+			
+			<div class="row mb-2">
+				<div class="col-sm-3 col-lg-2">
+					<button type="button" class="btn btn-lg btn-warning my-3" onclick="beep()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16"><path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5.002 5.002 0 0 1 13 6c0 .88.32 4.2 1.22 6z"/></svg> IDENTIFY</button>
+				</div>
+				<div class="col-sm-9 col-lg-10">
+					<p>Assigned to tank: {{ tank_number }}<br>
+					Serial number: {{ nodeid }}<br>
+					{{ custom_profile_note }}</p>
+				</div>
+			</div>
+			
+			<hr>
+			
+			<div class="row mb-2">
+				<div class="col-lg-8">
+					<h2>Status</h2>
+					<div id="status_placeholder">
+						<table class="table table-striped table-hover table-bordered table-sm">
+							<caption>This table is auto-refreshed every 5 seconds. But if you&#39;re impatient: <button type="button" class="btn btn-outline-primary" onclick="buildtable()">REFRESH</button></caption>
+							<thead class="table-dark"><tr><th scope="col">Variable</th><th scope="col">Value</th><th>Description</th></tr></thead>
+							<tbody></tbody>
+						</table>
+					</div>
+					<p>Note that this page merely fetches the latest snapshots of these variables from the controller. Internally the controller updates these snapshots on its own schedule (at different frequencies for different variables even), so repeated refresh would only fetch the same values until they are updated by the controller.</p>
+				</div>
+			</div>
+			
+			<hr>
+			
+			<div class="row mb-2">
+				<div class="col">
+					<h2>Manual Valve Override</h2>
+					<div class="row mb-3">
+						<div class="col-12">
+							<p>All valves are closed if the PAUSE button is pressed. Then the controller gives up control of the valves for <b>15 minutes</b>. Keep in mind that
+								<ul>
+									<li>The PAUSE button suspends valve operations only. It doesn't affect the deployed-maintenance mode setting;</li>
+									<li>Pressing PAUSE again will reset the countdown timer;</li>
+									<li>The controller will make noise with its buzzer until it can resume operation;</li>
+									<li>You would be competing with the controller for valve control if you don&#39;t pause it first.</li>
+								</ul>
+							</p>
+							<div class="input-group my-4">
+								<div class="btn-group"><button id="pausebutton" type="button" class="btn btn-lg btn-outline-danger"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pause-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M5 6.25a1.25 1.25 0 1 1 2.5 0v3.5a1.25 1.25 0 1 1-2.5 0v-3.5zm3.5 0a1.25 1.25 0 1 1 2.5 0v3.5a1.25 1.25 0 1 1-2.5 0v-3.5z"/></svg> PAUSE</button><button id="resumebutton" type="button" class="btn btn-lg btn-outline-success"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/></svg> RESUME</button></div><label id="pause_time_remaining_label" class="mx-3"></label>
+							</div>
+						</div>
+
+						<div class="col-12">
+							<div class="input-group my-2">
+								<label class="input-group-text text-light bg-danger">&nbsp;&nbsp;&nbsp;&nbsp;HOT&nbsp;&nbsp;&nbsp;&nbsp;</label>
+								<button id="hoton" type="button" class="btn btn-lg btn-outline-secondary">OPEN</button>
+								<button id="hotoff" type="button" class="btn btn-lg btn-outline-secondary">CLOSE</button>
+							</div>
+						</div>
+						<div class="col-12">
+							<div class="input-group my-2">
+								<label class="input-group-text text-light bg-info">&nbsp;&nbsp;&nbsp;COLD&nbsp;&nbsp;&nbsp;</label>
+								<button id="coldon" type="button" class="btn btn-lg btn-outline-secondary">OPEN</button>
+								<button id="coldoff" type="button" class="btn btn-lg btn-outline-secondary">CLOSE</button>
+							</div>
+						</div>
+						<div class="col-12">
+							<div class="input-group my-2">
+								<label class="input-group-text text-light bg-secondary">AMBIENT</label>
+								<button id="ambienton" type="button" class="btn btn-lg btn-outline-secondary">OPEN</button>
+								<button id="ambientoff" type="button" class="btn btn-lg btn-outline-secondary">CLOSE</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<hr>
+			
+			<div class="row mb-2">
+				<div class="col">
+					<h2>Thermostat Control</h2>
+					<!--Design notes: "why are pause/resume buttons but this a toggle switch?" There is an auto-resume after timeout (so underlying state could change that the UI would not be aware of), and repeated presses of the "pause" button would reset the countdown timer. In the case of this toggle switch, it serves both as a level to pull and as an indicator to display the current state to the user.-->
+					<form>
+						<div class="form-check form-switch">
+							<input class="form-check-input" type="checkbox" id="thermostatcontrolcheckbox">
+							<label class="form-check-label" for="thermostatcontrolcheckbox">?</label>
+						</div>
+					</form>
+					<p>
+						<ul>
+							<li><em>Deployed</em>: Attempt to regulate tank temperature following the <a href="/user/config/profile.csv">temperature profile</a>.</li>
+							<li><em>Maintenance</em>: Exercise the valves roughly once an hour; keep them closed in between.</li>
+						</ul>
+					</p>
+				</div>
+			</div>
+			
+			<hr>
+			
+			<div class="row mb-2">
+				<div class="col">
+					<h2>Useful Links</h2>
+					<p>
+						<a href="/user/config/profile.csv">profile.csv - the current temperature profile</a><br>
+						<a href="/user/records.db">Temperature history, calibration data, log entries</a> (you will need <a href="https://sqlitebrowser.org/dl/">this</a>)<br>
+						<a href="/user/config/config.txt">config.txt - the current configuration file</a><br>
+						<a class="supervisorlink">Task Manager (Supervisor)</a><br>
+						<a id="brokerlink" href="#">Message Broker (RabbitMQ)</a><br>
+						<a id="cloudlink">&quot;The cloud&quot; (historical data hosted by MESHLAB)</a><br>
+						<!--a href="/static/">Whatever you put in /var/www/html/ on the controller will show up here</a>.<br-->
+						<a href="/static/doc.png">Documentation (just a graph for now)</a><br>
+					</p>
+				</div>
+			</div>
+
+			<hr>
+
+			<div class="row mb-2">
+				<div class="col">
+					<h2>Operations</h2>
+
+					<h4>"Dear Diary..."</h4>
+					<p>You can leave a message here to be timestamped and <a href="/user/records.db">stored</a> on the controller.<br>
+					A reference temperature, if provided, will be stored and used for temperature sensor drift compensation. Leave the box empty if not used.</p>
+					<form action="/userlog" method="post" id="tref_form">
+						<div class="form-group mb-4">
+							<div class="row">
+								<div class="col-8">
+									<input type="text" name="tref_note" class="form-control" placeholder="Enter a message to be timestamped. Note to self, phone numbers, grocery list..." aria-label="log entry" autocomplete="on">
+								</div>
+								<div class="col-3">
+									<input type="number" step="any" name="tref" min="{{cmin}}" max="{{cmax}}" class="form-control" placeholder="Ref. T in °C" aria-label="reference temperature" autocomplete="off">
+								</div>
+								<div class="col-1">
+									<input type="hidden" name="ts_user">
+									<input type="submit" class="btn btn-outline-secondary" value="Submit">
+								</div>
+							</div>
+						</div>
+					</form>
+					<h5>Most recent log entries (max. 100)</h5>
+					<div class="my-4">
+						<table id="recentuserlogtable" class="table table-striped table-hover table-bordered table-sm" width="100%"></table>
+					</div>
+					
+					<!--h4>"Dear Diary"</h4>
+					<form action="/deardiary" method="post" id="diary_form">
+						<div class="form-group mb-4">
+							<div class="row">
+								<div class="col-11">
+									<input type="text" name="diaryentry" class="form-control" placeholder="Enter a message to be timestamped. Reminders, phone numbers, grocery list..." aria-label="custom log" autocomplete="on">
+								</div>
+								<div class="col-1">
+									<input type="hidden" name="ts_user">
+									<input type="submit" class="btn btn-outline-secondary" value="Submit">
+								</div>
+							</div>
+						</div>
+					</form-->
+					
+					<h4>Temperature Profile Upload</h4>
+					<div class="my-3">
+						<p>New temperature profile can be uploaded here. It must be named <em>profile.csv</em>. Configuration file (<em>config.txt</em>) can also be uploaded here for debugging purposes. No other files are accepted.</p>
+						<div class="my-3">
+							<form method=post enctype=multipart/form-data>
+								<input type=file name=file>
+								<input type=submit value=Upload>
+							</form>
+						</div>
+						<p>These files live in <em>/var/www/html/config/</em> on the controller. Uploaded copies overwrite existing copies unconditionally, so it's on you to make sure the new version is valid.</p>
+						<!--p>The thermostat reads the profile only on start up. You might want to restart it after an upload (see <a class="supervisorlink">Task Manager</a>).</p-->
+					</div>
+				</div>
+			</div>
+
+			<hr>
+
+			<div class="row mb-2">
+				<div class="col">
+					<h2>"Instant Regret"</h2>
+					<div class="form-check">
+						<input type="checkbox" class="form-check-input" id="checkrebootshutdown">
+						<label class="form-check-label" for="checkrebootshutdown">I know what I am doing</label>
+					</div>
+
+					<button type="button" class="btn btn-danger btn-sm text-light me-2" id="buttonreboot" onclick="reboot()" disabled><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bootstrap-reboot" viewBox="0 0 16 16"><path d="M1.161 8a6.84 6.84 0 1 0 6.842-6.84.58.58 0 1 1 0-1.16 8 8 0 1 1-6.556 3.412l-.663-.577a.58.58 0 0 1 .227-.997l2.52-.69a.58.58 0 0 1 .728.633l-.332 2.592a.58.58 0 0 1-.956.364l-.643-.56A6.812 6.812 0 0 0 1.16 8z"/><path d="M6.641 11.671V8.843h1.57l1.498 2.828h1.314L9.377 8.665c.897-.3 1.427-1.106 1.427-2.1 0-1.37-.943-2.246-2.456-2.246H5.5v7.352h1.141zm0-3.75V5.277h1.57c.881 0 1.416.499 1.416 1.32 0 .84-.504 1.324-1.386 1.324h-1.6z"/></svg> REBOOT</button>
+					
+					<button type="button" class="btn btn-danger btn-sm text-light me-2" id="buttonshutdown" onclick="shutdown()" disabled><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-power" viewBox="0 0 16 16"><path d="M7.5 1v7h1V1h-1z"/><path d="M3 8.812a4.999 4.999 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812z"/></svg> SHUTDOWN</button>
+				</div>
+			</div>
+		</div>
+	</body>
+	<footer>
+		<br><br>
+	</footer>
+
+	<script>
+		$(".supervisorlink").each(function(index) {
+			$(this).attr('href', window.location.href.slice(0, -1) + ":9000");
+		});
+		document.getElementById('brokerlink').href = window.location.href.slice(0, -1) + ":15672";
+		document.getElementById('cloudlink').href = "https://grogdata.soest.hawaii.edu/coconut/nodepage/" + "{{nodeid}}";
+		
+		$("#thermostatcontrolcheckbox").on('click', function() {
+			if (this.checked)
+			{
+				$.post('/thermostatcontrol?newstate=deployed');
+			}
+			else
+			{
+				$.post('/thermostatcontrol?newstate=maintenance');
+			}
+		});
+		
+		$("#checkrebootshutdown").change(function() {
+			$("#buttonreboot").prop('disabled', !this.checked);
+			$("#buttonshutdown").prop('disabled', !this.checked);
+		});
+		
+		$("#tref_form").submit(function() {
+			// insert user's computer's time along with the POST request
+			$(this).find('input[type="hidden"]').val((Date.now()*1e-3).toFixed(0));
+		});
+		
+		// - - - - -
+		
+		function beep()
+		{
+			$.get("/beep?t=0.2");
+		}
+		
+		function reboot()
+		{
+			alert('nice try');
+		}
+		
+		function shutdown()
+		{
+			alert('try harder');
+		}
+		
+		function buildtable()
+		{
+			$.getJSON('/status', function(data)
+			{
+				console.log(data);
+				
+				function formatter(v, customtext='UNKNOWN')
+				{
+					return null === v ? '<span class="text-danger"><em>' + customtext + '</em></span>' : v;
+				}
+				
+				let tbody = $('<tbody/>');
+
+				if (data['inhibit'] > 0)
+				{
+					tbody.append($('<tr><th scope="row">Time to auto-resume</th><td><span class="text-danger">~' + ((data['inhibit']/60).toFixed(0) + "m") + '</span></td><td>Time to thermostat regain valve control</td></tr>'));
+				}
+				tbody.append($('<tr><th scope="row">tank_status</th><td>' + formatter(data['tank_status']) + '</td><td>Current thermostat mode</td></tr>'));
+				tbody.append($('<tr><th scope="row">tank_state</td><td>' + formatter(data['tank_state']) + '</td><td>Valve state</td></tr>'));
+				if (null !== data['t0'])
+				{
+					tbody.append($('<tr><th scope="row">t0</td><td>' + data['t0'].toFixed(2) + ' °C</td><td>Observed tank temperature (corrected)</td></tr>'));
+				}
+				else
+				{
+					tbody.append($('<tr><th scope="row">t0</td><td>' + formatter(null) + ' °C</td><td>Observed tank temperature (corrected)</td></tr>'));
+				}
+				if ('deployed' === data['tank_status'])
+				{
+					if ('NA' === data['setpoint'])
+					{
+						// "NA" in profile.csv are preserved as the string "NA" in sqlite;
+						// "NA" are converted to float('NaN') by get_setpoint();
+						// Backend converts float('NaN') to the string 'NA';
+						// "marked as 'NA' in the profile; it's not a number and we know it". It is not None aka "not in the cachce; I don't know", so it's not treated as an error.
+						// Talk abut impedance mismatch. All because sqlite doesn't like NaN (MySQL doesn't like None so that won't save you either).
+						tbody.append($('<tr><th scope="row">setpoint</td><td><em>NA</em></td><td>Target tank temperature</td></tr>'));
+					}
+					else
+					{
+						// so let's see if it's a number (all good) or null (we don't know what that is supposed to be - error upstream)
+						tbody.append($('<tr><th scope="row">setpoint</td><td>' + formatter(data['setpoint']) + ' °C</td><td>Target tank temperature</td></tr>'));
+					}
+				}
+				tbody.append($('<tr><th scope="row">c0</td><td>' + data['c0'].toFixed(6) + ' °C</td><td>Current probe offset</td></tr>'));
+				tbody.append($('<tr><th scope="row">hot</td><td>' + (data['hot'] ? "OPEN" : "CLOSED") + '</td><td>"Hot" valve state</td></tr>'));
+				tbody.append($('<tr><th scope="row">cold</td><td>' + (data['cold'] ? "OPEN" : "CLOSED") + '</td><td>"Cold" valve state</td></tr>'));
+				tbody.append($('<tr><th scope="row">ambient</td><td>' + (data['ambient'] ? "OPEN" : "CLOSED") + '</td><td>"Ambient" valve state</td></tr>'));
+				tbody.append($('<tr><th scope="row">uptime_second</td><td>' + formatter(data['uptime_second']) + '</td><td>Controller uptime</td></tr>'));
+				tbody.append($('<tr><th scope="row">freeMB</td><td>' + formatter(data['freeMB']) + ' MB</td><td>Remaining disk space on controller</td></tr>'));
+				tbody.append($('<tr><th scope="row">cpu_temp</td><td>' + formatter(data['cpu_temp']) + ' °C</td><td>Controller CPU temperature</td></tr>'));
+				tbody.append($('<tr><th scope="row">Δclock</td><td>' + (Date.now()*1e-3 - data['ts']).toFixed(3) + ' seconds </td><td>Your computer\'s clock - controller\'s clock</td></tr>'));
+				$("#status_placeholder > table > tbody").remove();
+				$("#status_placeholder > table").append(tbody);
+			})
+			.fail(function() {
+				console.log("/status call failed");
+
+				let tbody = $('<tbody/>');
+				tbody.append($('<tr><td>Error</td><td>(controller unreachable)</td></tr>'));
+				$("#status_placeholder > table > tbody").remove();
+				$("#status_placeholder > table").append(tbody);
+			});
+		}
+		
+		function settimeoutbuildtable()
+		{
+			buildtable();
+			setTimeout(settimeoutbuildtable, 5*1000);
+		}
+		settimeoutbuildtable();
+		
+		var previous_pause_state = null;
+		function UIstateupdate()
+		{
+			$.getJSON('/pause', function( ttl ) {
+				let e = $("#pause_time_remaining_label");
+				let should_refresh_table = (null === previous_pause_state) || (previous_pause_state != ttl > 0);
+				if (ttl > 0)
+				{
+					e.text("Auto-resuming in " + Math.floor(ttl/60) + "m" + ttl%60 + "s").removeClass('hidden');
+					previous_pause_state = true;
+				}
+				else
+				{
+					e.text('').addClass('hidden');
+					previous_pause_state = false;
+				}
+				
+				if (should_refresh_table)
+				{
+					buildtable();
+				}
+			}).fail(function() {
+				console.log('no response');
+				let e = $("#pause_time_remaining_label");
+				e.text('').addClass('hidden');
+			});
+			
+			$.getJSON('/thermostatcontrol', function(data) {
+				let e = $("#thermostatcontrolcheckbox");
+				if ('deployed' === data)
+				{
+					e.next().text('Thermostat is enabled ("deployed" mode).');
+					e.prop('checked', true);
+					e.prop('disabled', false);
+				}
+				else if ('maintenance' === data)
+				{
+					e.next().text('Thermostat is disabled ("maintenance" mode).');
+					e.prop('checked', false);
+					e.prop('disabled', false);
+				}
+				else
+				{
+					console.log('unknown response ' + data);
+					e.next().text("it's beyond my paygrade");
+					e.prop('checked', true);
+				}
+			}).fail(function() {
+				console.log('no response');
+				let e = $("#thermostatcontrolcheckbox");
+				e.next().text('?!');
+				e.prop('checked', false);
+				e.prop('disabled', true);
+			});
+			
+			setTimeout(UIstateupdate, 1000);
+		}
+		UIstateupdate();
+		
+		// - - - - -
+		
+		document.getElementById('pausebutton').onclick = function() {
+			$.post('/pause', function( data ) {
+				//
+			});
+		};
+		
+		document.getElementById('resumebutton').onclick = function() {
+			$.get('/resume', function( data ) {
+				//
+			});
+		};
+
+		document.getElementById('hoton').onclick = function() {
+			$.post('/valve/hot?newstate=on', function( data ) {
+				console.log(data);
+				buildtable();
+			});
+		};
+		document.getElementById('hotoff').onclick = function() {
+			$.post('/valve/hot?newstate=off', function( data ) {
+				console.log(data);
+				buildtable();
+			});
+		};
+		document.getElementById('coldon').onclick = function() {
+			$.post('/valve/cold?newstate=on', function( data ) {
+				console.log(data);
+				buildtable();
+			});
+		};
+		document.getElementById('coldoff').onclick = function() {
+			$.post('/valve/cold?newstate=off', function( data ) {
+				console.log(data);
+				buildtable();
+			});
+		};
+		document.getElementById('ambienton').onclick = function() {
+			$.post('/valve/ambient?newstate=on', function( data ) {
+				console.log(data);
+				buildtable();
+			});
+		};
+		document.getElementById('ambientoff').onclick = function() {
+			$.post('/valve/ambient?newstate=off', function( data ) {
+				console.log(data);
+				buildtable();
+			});
+		};
+
+		$.getJSON('/userlog?n=100', function(data) {
+		// design note: you could have the backend send you the column names too, but then you lose the ability to customize them (display different column names from their database field names).
+			$('#recentuserlogtable').DataTable( {
+				data: data,
+				columns: [
+					{ title: "dt" },
+					{ title: "t0" },
+					{ title: "Tref." },
+					{ title: "message" }
+				],
+				"lengthChange": true,
+				"paging": true,
+				"pageLength": 5,
+				"info": true,
+				"order": [[0, 'desc']],
+			} );
+		});
+
+	</script>
+</html>
+
