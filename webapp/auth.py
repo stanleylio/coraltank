@@ -1,13 +1,16 @@
 from functools import wraps
 from flask import request, Response
 import logging, sys
+sys.path.append('/home/pi')
+from cred import cred
+
 
 # need to add "WSGIPassAuthorization On" to apache site .conf file to make this work
 
 
 def check_auth(userid, password):
     try:
-        return 'pi' == userid and 'tanksystem210' == password
+        return 'pi' == userid and cred['webapp'] == password
     except Exception:
         logging.exception(f'userid={userid}, password={password}')
     return False
