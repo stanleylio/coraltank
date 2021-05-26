@@ -52,9 +52,10 @@ def get_corrected_current_temp():
         tmp = redis_server.get('t0')
         if tmp is not None:
             tmp = json.loads(tmp) + get_probe_offset()
+            return round(tmp, 6)
     except:
         logging.debug('wut?')
-    return round(tmp, 6)
+    return tmp
 
 
 async def task_deployed():
