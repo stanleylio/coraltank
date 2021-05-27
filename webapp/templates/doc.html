@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+		<link href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+		<script src="{{ url_for('static', filename='jquery-3.6.0.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+		
+		<title>{{ controller_name }} | Documentation</title>
+	</head>
+	<body style="background-color: {{ panel_background_color }};">
+		<div class="container">
+			<div class="row">
+				<div class="col">
+					{% include 'doccontent.html' %}
+				</div>
+			</div>
+		</div>
+	</body>
+	<footer>
+		<br><br>
+	</footer>
+
+</html>
+

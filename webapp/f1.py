@@ -51,7 +51,7 @@ def root():
                                nodeid=serial_number,
                                controller_name=escape(controller_name),
                                custom_profile_note=escape(custom_note),
-                               tank_number=tank_number,
+                               tank_number=escape(tank_number),
                                cmin=cmin,
                                cmax=cmax,
                                panel_background_color=panel_background_color,
@@ -78,6 +78,16 @@ def root():
             return redirect('/')
     return "it's beyond my paygrade"
 
+
+@app.route('/doc')
+def doc():
+    controller_name = get_configuration('controller_name', '(noname)')
+    panel_background_color = get_configuration('panel_background_color', default='#ffffff')
+    return render_template('doc.html',
+                           controller_name=escape(controller_name),
+                           panel_background_color=panel_background_color,
+                           )
+    
 
 @app.route('/status')
 def status():

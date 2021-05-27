@@ -1,7 +1,7 @@
 # coraltank
 
 
-Scripts for a custom aquarium thermostat designed for experiments at [HIMB](http://gatescorallab.com/). The thermostat attempts to regulate the temperature of a water tank to follow a given temperature profiles. It controls solenoid valves that feed hot and cold water into the tank while monitoring the tank temperature with submerged temperature probe(s). The implementation is simple; the interesting bits perhaps are the requirements:
+Scripts for a custom aquarium thermostat designed for experiments at [HIMB](http://gatescorallab.com/). The thermostat attempts to regulate the temperature of a water tank to follow a given temperature profile. It controls solenoid valves that feed hot and cold water into the tank while monitoring the tank temperature with submerged temperature probe(s). The implementation is simple; the interesting bits perhaps are the requirements:
 
 ## Requirements for the thermostat
 
@@ -46,4 +46,4 @@ This implementation depends on these awesome projects:
 - [Redis](https://redis.io/)
 - [Supervisor](http://supervisord.org/)
 
-The list is not exhaustive of course. Just listing the stuff that need to be installed separately after `git clone`.
+The list is not exhaustive of course. Just listing the stuff that needs to be installed separately after `git clone`.

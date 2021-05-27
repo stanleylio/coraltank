@@ -1,0 +1,36 @@
+<h1 id="documentation-something-something-work-in-progress">Documentation something something... work in progress</h1>
+<p>Dedicated to the poor soul who have to maintain the software on these controllers. Probably me in 6 months.</p>
+<h2 id="title-placeholder">title placeholder</h2>
+<p><img src="/static/doc.png" alt="system block diagram"></p>
+<h2 id="what-is-what-in-config-txt-">What is what in <code>config.txt</code></h2>
+<h3 id="-tank_number-"><code>tank_number</code></h3>
+<p>Not used by controller. Displayed on the Control Panel for identification purposes.</p>
+<h3 id="-controller_name-"><code>controller_name</code></h3>
+<p>Not used by controller. Displayed on the Control Panel for identification purposes.</p>
+<h3 id="-custom_note-"><code>custom_note</code></h3>
+<p>Not used by controller. Displayed on the Control Panel for identification purposes.</p>
+<h3 id="-panel_background_color-"><code>panel_background_color</code></h3>
+<p>Background color of the Control Panel. Accept html color codes and names. You can find a picker <a href="https://htmlcolorcodes.com/">here</a>. Examples colors: <code>lavender</code>, <code>#F0FFF0</code>, <a href="https://www.wambooli.com/blog/?p=9203"><code>Chuck Norris</code></a></p>
+<h3 id="-serial_number-"><code>serial_number</code></h3>
+<p>This is how the controller is identified on the <a href="https://grogdata.soest.hawaii.edu/">MESHLAB cloud</a>. Telemetry data are transmitted to the cloud via AMQP. The block of <code>node-270</code> to <code>node-299</code> (plus <code>node-240</code> for legacy reason) are reserved for this project.</p>
+<p>Implementation details: RabbitMQ user name <code>coraltanks</code>; permissions restricted to exchange <code>uhcm</code> to topics <code>^node-(240|27\d|28\d|29\d).s$</code>.</p>
+<h3 id="-deadband_celsius-"><code>deadband_celsius</code></h3>
+<p>placeholder. Typical value: <code>0.5</code>.</p>
+<h3 id="-high_alarm_celsius-"><code>high_alarm_celsius</code></h3>
+<p>placeholder. Typical value: <code>35</code>.</p>
+<h3 id="-low_alarm_celsius-"><code>low_alarm_celsius</code></h3>
+<p>placeholder. Typical value: <code>22</code>.</p>
+<h3 id="-calibration_sample_size-"><code>calibration_sample_size</code></h3>
+<p>The latest this many reference temperature points are used to compute the temperature sensor compensation value. Typical value: <code>5</code>.</p>
+<h3 id="-calibration_accepted_max-"><code>calibration_accepted_max</code></h3>
+<p>Reference temperature supplied by the user must not be greater than this in degree Celsius. Typical value: <code>50</code>.</p>
+<h3 id="-calibration_accepted_min-"><code>calibration_accepted_min</code></h3>
+<p>Reference temperature supplied by the user must not be smaller than this in degree Celsius. Typical value: <code>5</code>.</p>
+<h3 id="-cloud_report_interval_second-"><code>cloud_report_interval_second</code></h3>
+<p>Transmit system health telemetry to <a href="https://grogdata.soest.hawaii.edu/">MESHLAB cloud</a> at this interval. Typical value: <code>60</code>.</p>
+<h3 id="-thermostat_loop_period_second-"><code>thermostat_loop_period_second</code></h3>
+<p>Thermostat control loop period. Typical value: <code>10</code>.</p>
+<h3 id="-maintenance_cycle_interval_second-"><code>maintenance_cycle_interval_second</code></h3>
+<p>In <code>maintenance</code> mode (i.e. thermostat disabled), periodically toggle the valves at this interval. Typical value: <code>3600</code>.</p>
+<h3 id="-keep_local_temperature_record_days-"><code>keep_local_temperature_record_days</code></h3>
+<p>Keep at most this many days worth of temperature history locally in the controller. Typical value: <code>180</code>.</p>
