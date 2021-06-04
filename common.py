@@ -11,7 +11,7 @@ from node.helper import init_rabbit, dt2ts
 logger = logging.getLogger(__name__)
 
 
-def get_configuration(key):
+def get_configuration(key, *, default=None):
     config = configparser.ConfigParser()
     config.read('/var/www/html/config/config.txt')
     for section in config:
@@ -19,10 +19,15 @@ def get_configuration(key):
             return config[section][key]
         except KeyError:
             pass
+    return default
 
 
 def get_probe_offset():
-    calibration_sample_size = max(1, int(get_configuration('calibration_sample_size')))
+    calibration_sample_size = max(0, int(get_configuration('calibration_sample_size', default=0)))
+    if calibration_sample_size <= 0:
+        logger.info('calibration_sample_size <= 0, invalid, or undefined; default to 0')
+        return 0
+    
     with sqlite3.connect('/var/www/html/records.db') as conn:
         cur = conn.cursor()
         try:

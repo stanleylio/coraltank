@@ -1,4 +1,4 @@
-import json, sys, logging, time, redis, os, configparser, sqlite3
+import json, sys, logging, time, redis, os, configparser, sqlite3, requests
 from flask import Flask, render_template, request, escape, Response, flash, redirect
 from auth import requires_auth
 from datetime import datetime
@@ -7,6 +7,8 @@ from xmlrpc.client import ServerProxy
 sys.path.append('/home/pi/tankcontrol')
 from common import get_setpoint, set_tank_status, get_tank_status
 from eztank import get_probe_offset
+sys.path.append('/home/pi')
+from cred import cred
 
 
 app = Flask(__name__)
@@ -253,7 +255,45 @@ def reference_temperature():
                                 LIMIT ?""", (n, ))
                 d = list(cur.fetchall())
         except:
-            logging.exceptino('??')
+            logging.exception('??')
         return Response(json.dumps(d),
                         mimetype='application/json; charset=utf-8')
+
+
+# Ideally I'd log these (important) events into the database, but SQLite
+# doesn't like multiple writers. The SD card is small so I don't want
+# MySQL here either. Not to mention it probably ain't safe to write to
+# disk right before shutdown.
+@app.route('/nicetry', methods=['GET'])
+@requires_auth
+def nicetry():
+    logging.exception('reboot requested')
+
+    requests.get(f"http://pi:{cred['webapp']}@localhost:9000/index.html?processname=eztank&action=stop")
+    time.sleep(0.5)
+    
+    proxy = ServerProxy('http://localhost:8001/')
+    proxy.valve_off('hot')
+    proxy.valve_off('cold')
+    proxy.valve_off('ambient')
+    time.sleep(0.5)
+    
+    ServerProxy('http://localhost:8002/').reboot()
+
+
+@app.route('/tryharder', methods=['GET'])
+@requires_auth
+def tryharder():
+    logging.exception('shutdown requested')
+
+    requests.get(f"http://pi:{cred['webapp']}@localhost:9000/index.html?processname=eztank&action=stop")
+    time.sleep(0.5)
+    
+    proxy = ServerProxy('http://localhost:8001/')
+    proxy.valve_off('hot')
+    proxy.valve_off('cold')
+    proxy.valve_off('ambient')
+    time.sleep(0.5)
+
+    ServerProxy('http://localhost:8002/').shutdown()
 

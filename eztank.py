@@ -51,7 +51,7 @@ def get_corrected_current_temp():
     try:
         tmp = redis_server.get('t0')
         if tmp is not None:
-            tmp = json.loads(tmp) + get_probe_offset()
+            tmp = json.loads(tmp) + get_probe_offset(force_refresh=random.random() > 0.999)
             return round(tmp, 6)
     except:
         logging.debug('wut?')

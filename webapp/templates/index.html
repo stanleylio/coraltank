@@ -204,7 +204,7 @@
 								<input type=submit value=Upload>
 							</form>
 						</div>
-						<p>These files live in <em>/var/www/html/config/</em> on the controller. Uploaded copies overwrite existing copies unconditionally, so it's on you to make sure the new version is valid.</p>
+						<p>These files live in <em>/var/www/html/config/</em> on the controller. Uploaded copies overwrite existing copies unconditionally, so it's on you to make sure the new version is valid. When in doubt, backup the existing copy first.</p>
 						<!--p>The thermostat reads the profile only on start up. You might want to restart it after an upload (see <a class="supervisorlink">Task Manager</a>).</p-->
 					</div>
 				</div>
@@ -215,6 +215,13 @@
 			<div class="row mb-2">
 				<div class="col">
 					<h2>"Instant Regret"</h2>
+					<h4>Reminders</h4>
+					<ul>
+						<li>The controller will <em>attempt</em> to turn off all valves before reboot/shutdown, but I make no guarantee;</li>
+						<li>The controller needs time to cleanup before shutdown. <b>Wait 1~2 minutes before pulling the plug</b>;</li>
+						<li>... but do not wait <em>too</em> long - if the controller is not unplugged <b>5 minutes</b> after shutdown, it will boot up again and resume operation.</li>
+					</ul>
+
 					<div class="form-check">
 						<input type="checkbox" class="form-check-input" id="checkrebootshutdown">
 						<label class="form-check-label" for="checkrebootshutdown">I know what I am doing</label>
@@ -268,12 +275,20 @@
 		
 		function reboot()
 		{
-			alert('nice try');
+			//alert('nice try');
+			if (confirm('Reboot the controller?'))
+			{
+				$.get("/nicetry");
+			}
 		}
 		
 		function shutdown()
 		{
-			alert('try harder');
+			//alert('try harder');
+			if (confirm('Shut down the controller? Remember that a timer will boot the Pi up again if power is not removed ~5 minutes after shutdown.'))
+			{
+				$.get("/tryharder");
+			}
 		}
 		
 		function buildtable()
