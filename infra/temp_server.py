@@ -1,8 +1,8 @@
 #
 # SL2021
-import time, logging, sys, statistics, redis, asyncio, json
+import time, logging, sys, statistics, redis, asyncio, json, glob, re
 from datetime import datetime
-from os.path import expanduser
+from os.path import join, expanduser
 sys.path.append(expanduser('~'))
 sys.path.append('..')
 from node.drivers.tsys01 import TSYS01
@@ -11,7 +11,11 @@ import numpy as np
 from common import get_configuration
 
 
-def get_temperature():
+def read_db18b20s():
+    return [int(re.match('.+t=(?P<t>\d{5})$', open(join(x, 'w1_slave')).read(), re.MULTILINE | re.DOTALL).group('t'))*1e-3 for x in sorted(glob.glob('/sys/bus/w1/devices/28-*'))]
+
+
+def read_tsys01():
     """Take a bunch of measurements from temperature sensor, reject
     3-sigma outliers, and return the sample average."""
     try:
@@ -30,15 +34,15 @@ def get_temperature():
         return round(statistics.mean(R), 4)
     except:
         logging.exception('{},channel={}'.format(time.time(), channel))
-        return None
+        return float('nan')
+    
 
-
-def raw_temperature():
+def get_temperature():
     try:
-        return round(TSYS01().read(), 4)
-    except:
-        logging.exception('{},channel={}'.format(time.time(), channel))
-        return None
+        return statistics.mean(read_db18b20s())
+    except statistics.StatisticsError:
+        logging.warning('fail to read DS18B20')
+    return read_tsys01()
 
 
 async def task_sample():
