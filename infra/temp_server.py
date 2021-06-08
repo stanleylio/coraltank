@@ -39,7 +39,7 @@ def read_tsys01():
 
 def get_temperature():
     try:
-        return statistics.mean(read_db18b20s())
+        return statistics.median(read_db18b20s())
     except statistics.StatisticsError:
         logging.warning('fail to read DS18B20')
     return read_tsys01()
