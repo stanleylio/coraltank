@@ -1,7 +1,6 @@
 # coraltank
 
-
-Scripts for a custom aquarium thermostat designed for experiments at [HIMB](http://gatescorallab.com/). The thermostat attempts to regulate the temperature of a water tank to follow a given temperature profile. It controls solenoid valves that feed hot and cold water into the tank while monitoring the tank temperature with submerged temperature probe(s). The implementation is simple; the interesting bits perhaps are the requirements:
+Scripts for a custom aquarium temperature controller designed for experiments at [HIMB](http://gatescorallab.com/). The controller is designed to regulate the temperature of a water tank to follow a given temperature profile. Instead of using heaters, it controls solenoid valves for hot and cold water (supplied externally) feeding into the tank. Tank temperature is monitored by submerged temperature probe(s). The implementation is simple; the interesting bits perhaps are the requirements:
 
 ## Requirements for the thermostat
 
@@ -14,6 +13,7 @@ Scripts for a custom aquarium thermostat designed for experiments at [HIMB](http
     - This doesn't preclude the rest of the controller to use external services for say telemetry, as long as network interruption doesn't interfere with thermostat operation
 - The solenoid valves must be cycled periodically even when thermostat is inactive (e.g. no ongoing experiment and thus no profile to track)
 - Valve state must fail-safe. If the fault condition is unrecoverable (e.g. temperature sensor malfunction), the valves (especially the hot valve) must not stay open
+- I say "controller" here, but they are typically deployed dozens at a time. Organization of code and configurations must minimize the amount of bootstrapping work required for each controller (ideally, clone the same SD card image and run perhaps at most one bash script)
 
 ## Requirements for the user interface (the Control Panel)
 
@@ -31,7 +31,6 @@ Through the Control Panel, the user can:
 - View and download the temperature history, the operation logs, and critical events
 - Do all of the above one-handed, on a phone/tablet, outdoor, under the sun, while both hands are wet with seawater
 
-
 ## Dependency
 
 This implementation depends on these awesome projects:
@@ -46,4 +45,4 @@ This implementation depends on these awesome projects:
 - [Redis](https://redis.io/)
 - [Supervisor](http://supervisord.org/)
 
-The list is not exhaustive of course. Just listing the stuff that needs to be installed separately after `git clone`.
+The list is not exhaustive of course; just listing the stuff that needs to be installed separately after `git clone`. There might be stuff from other open source projects; naturally their own licenses take precedence.
