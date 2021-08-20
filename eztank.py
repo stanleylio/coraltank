@@ -59,7 +59,7 @@ def get_corrected_current_temp():
 
 
 async def task_deployed():
-    # Execeute the experiment temperature profile
+    # Execute the experiment temperature profile
 
     tank_state = 'neutral'
 
