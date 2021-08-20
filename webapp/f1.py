@@ -1,5 +1,5 @@
 import json, sys, logging, time, redis, os, configparser, sqlite3, requests
-from flask import Flask, render_template, request, escape, Response, flash, redirect
+from flask import Flask, render_template, request, escape, Response, redirect
 from auth import requires_auth
 from datetime import datetime
 from werkzeug.utils import secure_filename
