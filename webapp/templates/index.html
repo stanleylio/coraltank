@@ -332,7 +332,7 @@
 					else
 					{
 						// so let's see if it's a number (all good) or null (we don't know what that is supposed to be - error upstream)
-						tbody.append($('<tr><th scope="row">setpoint</td><td>' + formatter(data['setpoint']) + ' °C</td><td>Target tank temperature</td></tr>'));
+						tbody.append($('<tr><th scope="row">setpoint</td><td>' + formatter(data['setpoint'].toFixed(6)) + ' °C</td><td>Target tank temperature</td></tr>'));
 					}
 				}
 				tbody.append($('<tr><th scope="row">c0</td><td>' + data['c0'].toFixed(6) + ' °C</td><td>Current probe offset</td></tr>'));
