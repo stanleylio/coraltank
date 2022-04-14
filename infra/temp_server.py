@@ -33,13 +33,14 @@ def read_tsys01():
         R = [r for r in R if abs(r - m) <= 3*std]
         return round(statistics.mean(R), 4)
     except:
-        logging.exception('{},channel={}'.format(time.time(), channel))
         return float('nan')
     
 
 def get_temperature():
     try:
-        return statistics.median(read_db18b20s())
+        T = read_db18b20s()
+        logging.debug(f"DS probes: {T}")
+        return statistics.median(T)
     except statistics.StatisticsError:
         logging.warning('fail to read DS18B20')
     return read_tsys01()
