@@ -73,7 +73,7 @@
 					<h2>Manual Valve Override</h2>
 					<div class="row mb-3">
 						<div class="col-12">
-							<p>All valves are closed if the PAUSE button is pressed. Then the controller gives up control of the valves for <b>15 minutes</b>. Keep in mind that
+							<p>PAUSE closes all valves and places them under operator control for <b>15 minutes</b>. Keep in mind that
 								<ul>
 									<li>The PAUSE button suspends valve operations only. It doesn't affect the deployed-maintenance mode setting;</li>
 									<li>Pressing PAUSE again will reset the countdown timer;</li>
@@ -310,13 +310,13 @@
 				}
 				tbody.append($('<tr><th scope="row">tank_status</th><td>' + formatter(data['tank_status']) + '</td><td>Current thermostat mode</td></tr>'));
 				tbody.append($('<tr><th scope="row">tank_state</td><td>' + formatter(data['tank_state']) + '</td><td>Valve state</td></tr>'));
-				if (null !== data['t0'])
+				if (null !== data['t0c'])
 				{
-					tbody.append($('<tr><th scope="row">t0</td><td>' + data['t0'].toFixed(2) + ' °C</td><td>Observed tank temperature (corrected)</td></tr>'));
+					tbody.append($('<tr><th scope="row">t0c</td><td>' + data['t0c'].toFixed(2) + ' °C</td><td>Observed tank temperature (corrected)</td></tr>'));
 				}
 				else
 				{
-					tbody.append($('<tr><th scope="row">t0</td><td>' + formatter(null) + ' °C</td><td>Observed tank temperature (corrected)</td></tr>'));
+					tbody.append($('<tr><th scope="row">t0c</td><td>' + formatter(null) + ' °C</td><td>Observed tank temperature (corrected)</td></tr>'));
 				}
 				if ('deployed' === data['tank_status'])
 				{
@@ -332,13 +332,16 @@
 					else
 					{
 						// so let's see if it's a number (all good) or null (we don't know what that is supposed to be - error upstream)
-						tbody.append($('<tr><th scope="row">setpoint</td><td>' + formatter(data['setpoint']) + ' °C</td><td>Target tank temperature</td></tr>'));
+						tbody.append($('<tr><th scope="row">setpoint</td><td>' + formatter(data['setpoint'].toFixed(6)) + ' °C</td><td>Target tank temperature</td></tr>'));
 					}
 				}
 				tbody.append($('<tr><th scope="row">c0</td><td>' + data['c0'].toFixed(6) + ' °C</td><td>Current probe offset</td></tr>'));
 				tbody.append($('<tr><th scope="row">hot</td><td>' + (data['hot'] ? "OPEN" : "CLOSED") + '</td><td>"Hot" valve state</td></tr>'));
+				tbody.append($('<tr><th scope="row">hot duty cycle</td><td>' + ((100*data['pwm_hot']).toFixed(0)) + '%</td><td>"Hot" valve duty cycle</td></tr>'));
 				tbody.append($('<tr><th scope="row">cold</td><td>' + (data['cold'] ? "OPEN" : "CLOSED") + '</td><td>"Cold" valve state</td></tr>'));
+				tbody.append($('<tr><th scope="row">cold duty cycle</td><td>' + ((100*data['pwm_cold']).toFixed(0)) + '%</td><td>"Cold" valve duty cycle</td></tr>'));
 				tbody.append($('<tr><th scope="row">ambient</td><td>' + (data['ambient'] ? "OPEN" : "CLOSED") + '</td><td>"Ambient" valve state</td></tr>'));
+				tbody.append($('<tr><th scope="row">ambient duty cycle</td><td>' + ((100*data['pwm_ambient']).toFixed(0)) + '%</td><td>"Ambient" valve duty cycle</td></tr>'));
 				tbody.append($('<tr><th scope="row">uptime_second</td><td>' + formatter(data['uptime_second']) + '</td><td>Controller uptime</td></tr>'));
 				tbody.append($('<tr><th scope="row">freeMB</td><td>' + formatter(data['freeMB']) + ' MB</td><td>Remaining disk space on controller</td></tr>'));
 				tbody.append($('<tr><th scope="row">cpu_temp</td><td>' + formatter(data['cpu_temp']) + ' °C</td><td>Controller CPU temperature</td></tr>'));
@@ -493,4 +496,3 @@
 
 	</script>
 </html>
-

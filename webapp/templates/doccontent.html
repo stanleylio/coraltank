@@ -1,6 +1,6 @@
 <h1 id="documentation-something-something-work-in-progress">Documentation something something... work in progress</h1>
-<p>Dedicated to the poor soul who have to maintain the software on these controllers. Probably me in 6 months.</p>
-<h2 id="title-placeholder">title placeholder</h2>
+<p>Dedicated to the poor soul who will have to maintain the software on these controllers. Probably me in 6 months.</p>
+<h2 id="information-flow-diagram">Information Flow Diagram</h2>
 <p><img src="/static/doc.png" alt="system block diagram"></p>
 <h2 id="what-is-what-in-config-txt-">What is what in <code>config.txt</code></h2>
 <h3 id="-tank_number-"><code>tank_number</code></h3>
@@ -34,3 +34,15 @@
 <p>In <code>maintenance</code> mode (i.e. thermostat disabled), periodically toggle the valves at this interval. Typical value: <code>3600</code>.</p>
 <h3 id="-keep_local_temperature_record_days-"><code>keep_local_temperature_record_days</code></h3>
 <p>Keep at most this many days worth of temperature history locally in the controller. Typical value: <code>180</code>.</p>
+<h3 id="-pwm_min_actuation_second-"><code>pwm_min_actuation_second</code></h3>
+<p>The PWM valve controller does not change the valve state if the valve state is expected to last less than this many seconds. Typical value: <code>0.2</code>.</p>
+<h3 id="-pid_history_max_count-"><code>PID_history_max_count</code></h3>
+<p>The PID controller retains at most this many measurements to compute the I and D terms. Typical value: <code>32</code>.</p>
+<h3 id="-pid_history_max_age_second-"><code>PID_history_max_age_second</code></h3>
+<p>The PID controller retains only measurements not older than this to compute the I and D terms. Typical value: <code>120</code>.</p>
+<h3 id="-pid_p-"><code>PID_P</code></h3>
+<p>The proportional term for the thermostat. Typical value: <code>1.0</code>.</p>
+<h3 id="-pid_i-"><code>PID_I</code></h3>
+<p>The integral term for the thermostat. Typical value: <code>0</code>.</p>
+<h3 id="-pid_d-"><code>PID_D</code></h3>
+<p>The differential term for the thermostat. Typical value: <code>0</code>.</p>

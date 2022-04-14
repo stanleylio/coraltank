@@ -1,5 +1,7 @@
 import logging, time, json, os, sys, redis
 import RPi.GPIO as GPIO
+sys.path.append('..')
+from common import send_to_the_one_true_master
 sys.path.append('../..')
 from node.drivers.beep import beep as _beep
 
@@ -10,15 +12,29 @@ _valve_pin_map = {'cold':17, 'hot':22, 'ambient':27}
 
 
 def valve_on(valve):
+    logger.info(f"{valve} on")
+    
     GPIO.setup(_valve_pin_map[valve], GPIO.OUT)
     GPIO.output(_valve_pin_map[valve], GPIO.HIGH)
     redis_server.set(valve, json.dumps(True))
+    try:
+        topic_suffix = f"valve/{valve}/on"
+        send_to_the_one_true_master(topic_suffix, {'ts':time.time(), })
+    except ConnectionRefusedError:
+        logger.warning('?')
 
 
 def valve_off(valve):
+    logger.info(f"{valve} off")
+    
     GPIO.setup(_valve_pin_map[valve], GPIO.OUT)
     GPIO.output(_valve_pin_map[valve], GPIO.LOW)
     redis_server.set(valve, json.dumps(False))
+    try:
+        topic_suffix = f"valve/{valve}/off"
+        send_to_the_one_true_master(topic_suffix, {'ts':time.time(), })
+    except ConnectionRefusedError:
+        logger.warning('?')
 
 
 def beep(second):
@@ -34,6 +50,9 @@ def get_valve_state(valve):
 
 
 if '__main__' == __name__:
+
+    logging.basicConfig(level=logging.DEBUG)
+    logger.setLevel(logging.DEBUG)
 
     from xmlrpc.server import SimpleXMLRPCServer
 

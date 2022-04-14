@@ -1,12 +1,13 @@
+# ... hum, actually I can't remember taking advantange of Python's
+# dynamic typing, but I do remember the bugs it had caused...
 import json, sys, logging, time, redis, os, configparser, sqlite3, requests
-from flask import Flask, render_template, request, escape, Response, flash, redirect
+from flask import Flask, render_template, request, escape, Response, redirect
 from auth import requires_auth
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from xmlrpc.client import ServerProxy
 sys.path.append('/home/pi/tankcontrol')
 from common import get_setpoint, set_tank_status, get_tank_status
-from eztank import get_probe_offset
 sys.path.append('/home/pi')
 from cred import cred
 
@@ -113,9 +114,13 @@ def status():
     r['cold'] = f('cold')
     r['ambient'] = f('ambient')
     r['t0'] = f('t0')
+    r['t0c'] = f('t0c')
+    r['pwm_hot'] = f('pwm_hot')
+    r['pwm_cold'] = f('pwm_cold')
+    r['pwm_ambient'] = f('pwm_ambient')
     # if it's NA in profile.csv it's recorded as "NA" in the database
     # (putting a string in a number field, exploiting sqlite3's lack of
-    # type restriction).
+    # type check).
     r['setpoint'] = f('setpoint', replacement='NA')
     r['c0'] = f('c0')
     r['tank_state'] = f('tank_state')   # should have been "valve_state" or "valve_status". But that ship has sailed long ago.
@@ -207,6 +212,7 @@ def reference_temperature():
     if 'POST' == request.method:
         try:
             redis_server = redis.StrictRedis(host='localhost', port=6379, db=0)
+            # need the uncorrected raw reading here
             t0 = json.loads(redis_server.get('t0'))
             now = int(time.time())
             nowdt = str(datetime.now())[:19]
@@ -225,6 +231,7 @@ def reference_temperature():
             if len(tref_note) > 0 or tref == tref:
                 with sqlite3.connect('/var/www/html/records.db') as conn:
                     cur = conn.cursor()
+
                     cur.execute(f"""CREATE TABLE IF NOT EXISTS userlog (
                                     'ts' INTEGER NOT NULL,
                                     'dt' TEXT NOT NULL,
@@ -236,15 +243,33 @@ def reference_temperature():
                                     )""")
                     cur.execute(f"""INSERT OR IGNORE INTO userlog ('ts', 'dt', 'ts_user', 'dt_user', 't0', 'tref', 'tref_note') VALUES (?,?,?,?,?,?,?)""",
                                 (now, nowdt, ts_user, dt_user, t0, tref, tref_note, ))
+                    conn.commit()
 
-                get_probe_offset(force_refresh=True)
+                    if tref == tref:
+                        r = redis_server.get('t_probes')
+                        if r is not None:
+                            r = json.loads(r)
+
+                            cur.execute(f"""CREATE TABLE IF NOT EXISTS probe_log (
+                                            'ts' INTEGER NOT NULL,
+                                            'ts_user' INTEGER,
+                                            'probe_id' TEXT NOT NULL,
+                                            't' REAL NOT NULL,
+                                            'tref' REAL NOT NULL,
+                                            UNIQUE(ts,probe_id)
+                                            )""")
+                            for probe_id, t in r.items():
+                                cur.execute(f"""INSERT OR IGNORE INTO probe_log ('ts', 'ts_user', 'probe_id', 't', 'tref') VALUES (?,?,?,?,?)""",
+                                            (now, ts_user, probe_id, t, tref, ))
+                            conn.commit()
             else:
-                logging.info('The note is empty, and Tref is invalid. Ignoring this request.')
+                logging.info('The note is empty, and Tref is invalid or not provided. Ignoring this request.')
         except:
             logging.exception('wut')
         return redirect('/')
     else:   # GET
         n = request.args.get('n', 10)
+        logging.debug(f"requested {n} entries")
         d = []
         try:
             with sqlite3.connect('/var/www/html/records.db') as conn:
@@ -263,11 +288,11 @@ def reference_temperature():
 # Ideally I'd log these (important) events into the database, but SQLite
 # doesn't like multiple writers. The SD card is small so I don't want
 # MySQL here either. Not to mention it probably ain't safe to write to
-# disk right before shutdown.
+# disk right before shutdown of the scripts and the machine.
 @app.route('/nicetry', methods=['GET'])
 @requires_auth
 def nicetry():
-    logging.exception('reboot requested')
+    logging.info('reboot requested')
 
     requests.get(f"http://pi:{cred['webapp']}@localhost:9000/index.html?processname=eztank&action=stop")
     time.sleep(0.5)
@@ -284,7 +309,7 @@ def nicetry():
 @app.route('/tryharder', methods=['GET'])
 @requires_auth
 def tryharder():
-    logging.exception('shutdown requested')
+    logging.info('shutdown requested')
 
     requests.get(f"http://pi:{cred['webapp']}@localhost:9000/index.html?processname=eztank&action=stop")
     time.sleep(0.5)
