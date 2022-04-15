@@ -6,8 +6,6 @@ from cred import cred
 from node.z import send as formatsend
 from node.helper import init_rabbit, dt2ts
 import numpy as np
-import paho.mqtt.publish as publish
-import paho.mqtt.client as client
 
 
 logger = logging.getLogger(__name__)
@@ -164,7 +162,8 @@ def is_valve_control_inhibited():
     redis_server = redis.StrictRedis(host='localhost', port=6379, db=0)
     # if the key does not exist, ttl returns -2. no exception raised
     # there.
-    return max(0, redis_server.ttl('inhibit')) > 0
+    #return max(0, redis_server.ttl('inhibit')) > 0
+    return redis_server.ttl('inhibit') > 0
 
 
 def send_to_meshlab(d):
@@ -177,34 +176,25 @@ def send_to_meshlab(d):
                           body=formatsend(None, d, src=senderid).strip(),
                           properties=pika.BasicProperties(delivery_mode=2,
                                                           content_type='text/plain',
-                                                          expiration=str(7*24*3600*1000)))
+                                                          expiration=str(3*24*3600*1000)))
 
 
-def send_to_the_one_true_master(topic_suffix, d):
-    # The sender doesn't identify itself when posting messages. So you
-    # either have to encode your sender ID either in your message or in
-    # your topic. Using topic here.
-
-    assert topic_suffix is not None and len(topic_suffix) > 0
-    
-    senderid = socket.gethostname()
-
-    broker = get_configuration('one_true_master_server_address').strip()
-    username, password = cred['mqtt']
-    topic = f"himb/gbrf/{senderid}/{topic_suffix}"
-
-    publish.single(topic,
-                   payload=json.dumps(d, separators=(',', ':')).encode('utf-8'),
-                   qos=1,
-                   retain=False,
-                   hostname=broker,
-                   port=1883,
-                   client_id=senderid,
-                   keepalive=60,
-                   will=None,
-                   auth={'username':username, 'password':password},
-                   protocol=client.MQTTv311,
-                   transport="tcp")
+def send_to_one_true_master(message_type, d):
+    senderid = get_configuration('controller_name')
+    exchange = 'gbrf'
+    routing_key = f"{message_type}.{senderid}.s"
+    connection, channel = init_rabbit('pi',
+                                      cred['rabbitmq'],
+                                      exchange=exchange,
+                                      host='localhost',
+                                      )
+    channel.exchange_declare(exchange=exchange, exchange_type='topic', durable=True)
+    channel.basic_publish(exchange=exchange,
+                          routing_key=routing_key,
+                          body=json.dumps(d, separators=(',', ':')).encode('utf-8'),
+                          properties=pika.BasicProperties(delivery_mode=2,
+                                                          content_type='text/plain',
+                                                          expiration=str(3*24*3600*1000)))
 
 
 def get_setpoint(*, fn='/var/www/html/config/profile.csv', force_read=True):

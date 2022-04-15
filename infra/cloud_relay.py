@@ -1,6 +1,6 @@
-import sys, logging, time, redis, asyncio, shutil, json
+import sys, logging, time, redis, asyncio, shutil, json, socket
 sys.path.append('..')
-from common import get_configuration, send_to_meshlab, send_to_the_one_true_master
+from common import get_configuration, send_to_meshlab, send_to_one_true_master
 
 
 logger = logging.getLogger(__name__)
@@ -48,10 +48,11 @@ async def task_relay():
         send_to_meshlab(d)
 
         try:
-            topic_suffix = f"op"
-            send_to_the_one_true_master(topic_suffix, d)
-        except ConnectionRefusedError:
-            logger.warning('ouch')
+            send_to_one_true_master('operation', d)
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.exception('ouch')
         
         await asyncio.sleep(cloud_report_interval_second)
 
@@ -59,6 +60,7 @@ async def task_relay():
 if '__main__' == __name__:
     
     logging.basicConfig(level=logging.DEBUG)
+    logging.getLogger('asyncio').setLevel(logging.WARNING)
     logging.getLogger('pika').setLevel(logging.WARNING)
     logging.getLogger('common').setLevel(logging.WARNING)
 
