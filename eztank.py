@@ -205,6 +205,7 @@ async def task_warning():
 if '__main__' == __name__:
     
     logging.basicConfig(level=logging.DEBUG)
+    logging.getLogger('asyncio').setLevel(logging.WARNING)
     logging.getLogger('pika').setLevel(logging.WARNING)
     logging.getLogger('common').setLevel(logging.WARNING)
 
