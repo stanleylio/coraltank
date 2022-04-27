@@ -20,9 +20,8 @@ SL2021
 """
 import time, logging, redis, json, sys, asyncio, random
 from datetime import datetime
-from common import get_setpoint, get_configuration, set_valve_pwm, trigger_valve_direct, get_tank_status, is_valve_control_inhibited, add_operation_entry
+from common import get_setpoint, get_configuration, set_valve_pwm, trigger_valve_direct, get_tank_status, is_valve_control_inhibited, add_operation_entry, beep
 sys.path.append('..')
-from node.drivers.beep import beep
 
 
 logger = logging.getLogger(__name__)

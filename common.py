@@ -1,10 +1,11 @@
-import logging, configparser, time, sys, pika, csv, sqlite3, os, json, redis, socket
+import logging, configparser, time, sys, pika, csv, sqlite3, os, json, redis, socket, calendar
 from datetime import datetime, timedelta
+from socket import gethostname
 from xmlrpc.client import ServerProxy
 sys.path.append('/home/pi')
 from cred import cred
-from node.z import send as formatsend
-from node.helper import init_rabbit, dt2ts
+import RPi.GPIO as GPIO
+from zlib import crc32
 import numpy as np
 
 
@@ -282,6 +283,54 @@ def get_setpoint(*, fn='/var/www/html/config/profile.csv', force_read=True):
         #return np.polyval(np.polyfit([leftt, rightt, ], [leftv, rightv, ], 1), now)
         # huh interp takes care of the case when x is outside of xp. that's nice.
         #return np.interp([now], [leftt, rightt, ], [leftv, rightv, ])[0]
+
+
+def beep(on=0.1, off=0.9):
+    pin = 18
+
+    try:
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(pin, GPIO.OUT)
+        GPIO.output(pin, GPIO.LOW)
+        time.sleep(on)
+        GPIO.output(pin, GPIO.HIGH)
+        time.sleep(off)
+        GPIO.cleanup(pin)
+    except:
+        GPIO.cleanup(pin)
+        raise
+
+
+def get_checksum(s):
+    return '{:08x}'.format(crc32(s.encode()) & 0xffffffff)  # python2-safe?
+
+
+def formatsend(channel, sample, src=None, dest=None):
+    if src is None:
+        src = gethostname()
+    tmp = {'from':src,
+           'v':1,
+           'p':sample}
+    if dest is not None:
+        tmp['to'] = dest
+    tmp = json.dumps(tmp, separators=(',', ':'))
+    m = '{}{}\n'.format(tmp, get_checksum(tmp))
+    m = m.encode()
+    if channel is not None:
+        channel.write(m)
+    return m
+
+
+def dt2ts(dt):
+    return calendar.timegm(dt.timetuple()) + (dt.microsecond)*(1e-6)
+
+
+def init_rabbit(name, password, *, exchange='uhcm', host='localhost'):
+    credentials = pika.PlainCredentials(name, password)
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host, 5672, '/', credentials))
+    channel = connection.channel()
+    channel.exchange_declare(exchange=exchange, exchange_type='topic', durable=True)
+    return connection, channel
 
 
 if '__main__' == __name__:
