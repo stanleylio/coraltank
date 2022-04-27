@@ -1,6 +1,5 @@
 import time, random, sys, logging
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 # Notes:
@@ -69,6 +68,8 @@ class PID:
 
 
 if '__main__' == __name__:
+
+    import matplotlib.pyplot as plt
 
     K = (2, 0.1, 0.1, )
     pid = PID(K, 10, 2*60)
