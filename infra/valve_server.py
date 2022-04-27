@@ -2,8 +2,7 @@ import logging, time, json, os, sys, redis
 import RPi.GPIO as GPIO
 sys.path.append('..')
 from common import send_to_one_true_master
-sys.path.append('../..')
-from node.drivers.beep import beep as _beep
+from common import beep as _beep
 
 
 logger = logging.getLogger(__name__)

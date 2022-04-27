@@ -6,7 +6,6 @@ from datetime import datetime
 from os.path import join, expanduser, basename
 sys.path.append(expanduser('~'))
 sys.path.append('..')
-from node.drivers.tsys01 import TSYS01
 from scipy.signal import medfilt
 import numpy as np
 from common import get_configuration, get_probe_offset
@@ -30,57 +29,12 @@ def read_ds18b20s():
     return dict(zip(SN, T))
 
 
-def read_tsys01():
-    """Take a bunch of measurements from the sensor, reject 3-σ
-    outliers, and return the sample average of what remains.
-
-    Design note + rant:
-    It only reads one probe, but (if successful) it returns a dict of
-    serial number : reading to follow read_ds18b20s()'s output format.
-
-    All this complexity (plus the TSYS01 driver rewrite) in order to
-    record the DS18B20 probed(s) individually (as opposed to, you know,
-    treating multiple of them as one unit with better precision).
-    
-    Operationally, it's not like you can identify which DS18B20 is which
-    since there is no label or marking on the probes, and thus no
-    ordering (e.g. you can't designate them as "probe1", "probe2",
-    "probe3" in the control code and the database). But if you had to
-    pull them apart one by one to identify and test them anyway, you may
-    as well test their accuracy there and then instead. But that's the
-    requirement and so that's how it is done here.
-    """
-    try:
-        sensor = TSYS01()
-        R = []
-        for i in range(13):
-            try:
-                R.append(sensor.read())
-                time.sleep(0.001)
-            except:
-                pass
-
-        #return round(float(np.mean(medfilt(R, 5))), 4)
-        m,std = statistics.mean(R), statistics.stdev(R)
-        R = [r for r in R if abs(r - m) <= 3*std]
-        return {f"{sensor.SN:03x}":round(statistics.mean(R), 4), }  # TSYS01 SN is 24-bit
-    except:
-        logger.exception('no tsys')
-        return None
-    
-
 def get_temperature() -> typing.Tuple[float, dict]:
     try:
         T = read_ds18b20s()
         return statistics.median(T.values()), T
     except statistics.StatisticsError:
-        logger.warning('Fail to read DS18B20. Fall back to TSYS01')
-
-    T = read_tsys01()
-    if T is None:
         return float('nan'), {}
-    else:
-        return statistics.median(T.values()), T
 
 
 async def task_sample():
