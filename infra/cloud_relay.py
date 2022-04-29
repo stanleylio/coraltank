@@ -39,6 +39,7 @@ async def task_relay():
              'uptime_second':uptime_second,
              'freeMB':free,
              'cpu_temp':cpu_temp,
+             't_probes':f('t_probes'),
              }
         logging.info(d)
         redis_server.set('uptime_second', json.dumps(uptime_second), ex=2*cloud_report_interval_second)
